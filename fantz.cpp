@@ -1,37 +1,17 @@
 #include "fantz.h"
-
-int minSplit(vector<uint> vect)
+//@Author Serhii Senyk 
+//02.12.2019
+int minSplit(set<uint> set)
 {
-	if (vect.size() == 0)
+	if (set.empty())
 		return -1;
-	uint min = vect[0];
-	for (int i = 0; i < vect.size(); ++i) {
-		if (vect[i] < min && vect[i] != 0)
-			min = vect[i];
+	for (const auto &min : set) {
+		if (min <= *set.begin())
+			return min;
 	}
-	return min;
 }
 
-int fantz(const string binaryInStr, const vector<string> & powsDecimal, map<string, int> & solution)
-{
-	if (isPow(binaryInStr, powsDecimal))
-		return 1;
-	vector<uint> allSplits;
-	string key;
-	for (int i = 1; i < binaryInStr.size(); ++i) {
-		if (isPow(binaryInStr.substr(i, binaryInStr.size()), powsDecimal)) {
-			key = binaryInStr.substr(i, binaryInStr.size());
-			if (solution.find(key) == solution.end())
-				allSplits.push_back(fantz(binaryInStr.substr(0, i), powsDecimal, solution) + 1);
-			else
-				allSplits.push_back(solution[key] + 1);
-		}
-	}
-	solution[key] = minSplit(allSplits);
-	return solution[key];
-}
-
-bool isPow(const string binaryInStr, const vector<string> powsDecimal)
+string ignoreNullInBegin(string binaryInStr)
 {
 	string binaryInSubStr = "";
 	for (int i = 0; i < binaryInStr.size(); ++i) {
@@ -40,12 +20,31 @@ bool isPow(const string binaryInStr, const vector<string> powsDecimal)
 			break;
 		}
 	}
-	for (int i = 0;
-		(i < powsDecimal.size()) && powsDecimal[i].size() <= binaryInStr.size(); ++i) {
-		if (powsDecimal[i] == binaryInSubStr)
-			return true;
+	return binaryInSubStr;
+}
+
+int fantz(const string binaryInStr, const set<string> & powsDecimal, map<string, int> & solution)
+{
+	if (isPow(binaryInStr, powsDecimal))
+		return 1;
+	set<uint> allSplits;
+	string key;
+	for (int i = 1; i < binaryInStr.size(); ++i) {
+		if (isPow(binaryInStr.substr(i, binaryInStr.size()), powsDecimal)) {
+			key = ignoreNullInBegin(binaryInStr.substr(i, binaryInStr.size()));
+			if (solution.find(key) == solution.end())
+				allSplits.insert(fantz(binaryInStr.substr(0, i), powsDecimal, solution) + 1);
+			else
+				allSplits.insert(solution[key] + 1);
+		}
 	}
-	return false;
+	solution[key] = minSplit(allSplits);
+	return solution[key];
+}
+
+bool isPow(const string binaryInStr, const set<string> powsDecimal)
+{
+	return (powsDecimal.find(ignoreNullInBegin(binaryInStr)) != powsDecimal.end()) ? true : false;
 }
 
 void convertToBinary(const uint128_t decimal, string & binaryInStr)
@@ -55,16 +54,16 @@ void convertToBinary(const uint128_t decimal, string & binaryInStr)
 	binaryInStr.push_back((decimal % BINARY_BASE) == 0 ? '0' : '1');
 }
 
-vector<string> powerGenerator(uint128_t decimal, const int maxSize)
+set<string> powerGenerator(uint128_t decimal, const int maxSize)
 {
-	vector<string> powDecimal;
+	set<string> powDecimal;
 	uint128_t pow = decimal;
 	string str = "";
-	powDecimal.push_back("1");
+	powDecimal.insert("1");
 	while (str.size() <= maxSize) {
 		str = "";
 		convertToBinary(pow, str);
-		powDecimal.push_back(str);
+		powDecimal.insert(str);
 		pow *= decimal;
 	}
 	return powDecimal;
